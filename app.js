@@ -6,8 +6,9 @@ const ROWS_COUNT = 5;
 const PADDING = 40;
 const VIEW_WIDTH = DPI_WIDTH;
 const VIEW_HEIGHT = DPI_HEIGHT - PADDING * 2;
+const CIRCLE_RADIUS = 8;
 const { log } = console;
-const { floor, round } = Math;
+const { floor, round, PI } = Math;
 const shortMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const shortDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -15,8 +16,10 @@ const shortDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 function chart(canvas, data) {
     const ctx = canvas.getContext('2d');
     let raf;
-
+    // ==
     canvas.addEventListener('mousemove', mousemove);
+    canvas.addEventListener('mouseleave', mouseleave);
+    // ==
     canvas.style.width = WIDTH + 'px';
     canvas.style.height = HEIGHT + 'px';
     canvas.width = DPI_WIDTH;
@@ -39,6 +42,10 @@ function chart(canvas, data) {
         }
     }
 
+    function mouseleave() {
+        proxy.mouse = null
+    }
+
     function clear() {
         ctx.clearRect(0, 0, DPI_WIDTH, DPI_HEIGHT);
     }
@@ -58,6 +65,14 @@ function chart(canvas, data) {
             .forEach((coords, index) => {
                 const color = data.colors[yData[index][0]];
                 line(ctx, coords, { color });
+
+                for (const [x, y] of coords) {
+                    if (isOver(proxy.mouse, x, coords.length)) {
+                        circle(ctx, [x, y], color);
+                        break;
+                    }
+                }
+
             });
     }
 
@@ -67,7 +82,8 @@ function chart(canvas, data) {
         },
         destroy() {
             cancelAnimationFrame(raf);
-            canvas.removeEventListener('mousemove', mousemove)
+            canvas.removeEventListener('mousemove', mousemove);
+            canvas.removeEventListener('mouseleave', mouseleave);
         }
     }
 }
@@ -132,6 +148,16 @@ function line(ctx, coords, { color }) {
     ctx.lineWidth = 4;
     ctx.strokeStyle = color || '#ff0000';
     coords.forEach(([x, y]) => ctx.lineTo(x, y));
+    ctx.stroke();
+    ctx.closePath();
+}
+
+function circle(ctx, [x, y], color) {
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.fillStyle = '#fff'
+    ctx.arc(x, y, CIRCLE_RADIUS, 0, 2 * PI);
+    ctx.fill();
     ctx.stroke();
     ctx.closePath();
 }
