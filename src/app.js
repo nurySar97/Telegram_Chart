@@ -1,3 +1,4 @@
+import './scss/index.scss';
 const WIDTH = 600;
 const HEIGHT = 200;
 const DPI_WIDTH = WIDTH * 2;
@@ -530,8 +531,8 @@ function getChartData() {
                 54,
                 89,
                 50,
-                73,
-                52
+                70,
+                52,
             ]
         ],
         "types": {
