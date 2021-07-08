@@ -6,6 +6,7 @@ const ROWS_COUNT = 5;
 const PADDING = 40;
 const VIEW_WIDTH = DPI_WIDTH;
 const VIEW_HEIGHT = DPI_HEIGHT - PADDING * 2;
+const { log } = console;
 const { floor, round } = Math;
 const shortMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const shortDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -15,6 +16,13 @@ function chart(canvas, data) {
     const [yMin, yMax] = computeBoundaries(data);
     const yRatio = VIEW_HEIGHT / (yMax - yMin);
     const xRatio = VIEW_WIDTH / (data.columns[0].length - 2);
+
+    function mousemove({ clientX, clientY }) {
+        log(clientX);
+        log(clientY)
+    }
+
+    canvas.addEventListener('mousemove', mousemove)
 
     canvas.style.width = WIDTH + 'px';
     canvas.style.height = HEIGHT + 'px';
@@ -34,9 +42,15 @@ function chart(canvas, data) {
             const color = data.colors[yData[index][0]];
             line(ctx, coords, { color });
         });
+
+    return {
+        destroy() {
+            canvas.removeEventListener('mousemove', mousemove)
+        }
+    }
 }
 
-chart(document.getElementById('chart'), getChartData());
+let chartUnMount = chart(document.getElementById('chart'), getChartData());
 
 function toCoords(xRatio, yRatio, col) {
     return col.map((y, index) => [
@@ -63,7 +77,7 @@ function yAxis(ctx, yMin, yMax) {
 
     ctx.beginPath();
     ctx.strokeStyle = '#bbb';
-    ctx.font = 'normal 20px Helvetica,sans-serif';
+    ctx.font = 'normal 18px Helvetica,sans-serif';
     ctx.fillStyle = '#96a2aa';
 
     for (let i = 1; i <= ROWS_COUNT; i++) {
@@ -479,3 +493,5 @@ function toDate(timestamp) {
     const date = new Date(timestamp);
     return `${shortMonths[date.getMonth()]} ${date.getDate()}`
 }
+
+window.onunload(chartUnMount.destroy)
