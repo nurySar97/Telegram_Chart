@@ -11,46 +11,66 @@ const { floor, round } = Math;
 const shortMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const shortDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+
 function chart(canvas, data) {
     const ctx = canvas.getContext('2d');
-    const [yMin, yMax] = computeBoundaries(data);
-    const yRatio = VIEW_HEIGHT / (yMax - yMin);
-    const xRatio = VIEW_WIDTH / (data.columns[0].length - 2);
+    let raf;
 
-    function mousemove({ clientX, clientY }) {
-        log(clientX);
-        log(clientY)
-    }
-
-    canvas.addEventListener('mousemove', mousemove)
-
+    canvas.addEventListener('mousemove', mousemove);
     canvas.style.width = WIDTH + 'px';
     canvas.style.height = HEIGHT + 'px';
     canvas.width = DPI_WIDTH;
     canvas.height = DPI_HEIGHT;
 
-    const yData = data.columns.filter(col => data.types[col[0]] === 'line');
-    const xData = data.columns.filter(col => data.types[col[0]] !== 'line')[0];
+    const proxy = new Proxy({}, {
+        set(...args) {
+            const _result = Reflect.set(...args);
+            raf = requestAnimationFrame(paint);
+            return _result;
+        }
+    })
 
-    // === axises
-    yAxis(ctx, yMin, yMax);
-    xAxis(ctx, xData, xRatio)
-    // ===
+    function mousemove({ clientX, clientY }) {
+        const { left } = canvas.getBoundingClientRect();
+        console.log(left)
+        proxy.mouse = {
+            x: (clientX - left) * 2,
+            y: clientY
+        }
+    }
 
-    yData.map(toCoords.bind('_', xRatio, yRatio))
-        .forEach((coords, index) => {
-            const color = data.colors[yData[index][0]];
-            line(ctx, coords, { color });
-        });
+    function clear() {
+        ctx.clearRect(0, 0, DPI_WIDTH, DPI_HEIGHT);
+    }
+
+    function paint() {
+        clear();
+        const [yMin, yMax] = computeBoundaries(data);
+        const yRatio = VIEW_HEIGHT / (yMax - yMin);
+        const xRatio = VIEW_WIDTH / (data.columns[0].length - 2);
+        const yData = data.columns.filter(col => data.types[col[0]] === 'line');
+        const xData = data.columns.filter(col => data.types[col[0]] !== 'line')[0];
+
+        yAxis(ctx, yMin, yMax);
+        xAxis(ctx, xData, xRatio, proxy)
+
+        yData.map(toCoords.bind('_', xRatio, yRatio))
+            .forEach((coords, index) => {
+                const color = data.colors[yData[index][0]];
+                line(ctx, coords, { color });
+            });
+    }
 
     return {
+        init() {
+            paint();
+        },
         destroy() {
+            cancelAnimationFrame(raf);
             canvas.removeEventListener('mousemove', mousemove)
         }
     }
 }
-
-let chartUnMount = chart(document.getElementById('chart'), getChartData());
 
 function toCoords(xRatio, yRatio, col) {
     return col.map((y, index) => [
@@ -59,15 +79,29 @@ function toCoords(xRatio, yRatio, col) {
     ])
 }
 
-function xAxis(ctx, data, xRatio) {
+function xAxis(ctx, data, xRatio, { mouse }) {
     const colsCount = 6;
     const step = round(data.length / colsCount);
     ctx.beginPath();
-    for (let i = 1; i < data.length; i += step) {
-        const text = toDate(data[i]);
+
+    for (let i = 1; i < data.length; i++) {
+
         const x = i * xRatio;
-        ctx.fillText(text, x, DPI_HEIGHT - 10);
+
+        if ((i - 1) % step === 0) {
+            const text = toDate(data[i]).toString();
+            ctx.fillText(text, x, DPI_HEIGHT - 10);
+        }
+
+        if (isOver(mouse, x, data.length)) {
+            ctx.save();
+            ctx.moveTo(x, PADDING);
+            ctx.lineTo(x, DPI_HEIGHT - PADDING);
+            ctx.restore();
+        }
+
     }
+    ctx.stroke();
     ctx.closePath();
 }
 
@@ -79,6 +113,7 @@ function yAxis(ctx, yMin, yMax) {
     ctx.strokeStyle = '#bbb';
     ctx.font = 'normal 18px Helvetica,sans-serif';
     ctx.fillStyle = '#96a2aa';
+    ctx.lineWidth = 1;
 
     for (let i = 1; i <= ROWS_COUNT; i++) {
         const y = step * i;
@@ -494,4 +529,11 @@ function toDate(timestamp) {
     return `${shortMonths[date.getMonth()]} ${date.getDate()}`
 }
 
-window.onunload(chartUnMount.destroy)
+function isOver(mouse, x, length) {
+    if (!mouse) return false;
+    const _width = DPI_WIDTH / length;
+    return Math.abs(x - mouse.x) < (_width / 2)
+}
+
+const { init, destroy } = chart(document.getElementById('chart'), getChartData());
+window.onload = init;
