@@ -67,6 +67,7 @@ body.tg-chart-preload .tg-chart-checkbox  {
 }
 
 body {
+  font-family: sans-serif;
   transition: background .22s ease-in-out;
 }
 
@@ -90,7 +91,8 @@ body.tg-night {
     margin-bottom: 1rem;
     z-index: 1;
 
-    &__right, &__left {
+    &__right, 
+    &__left {
       transition: background .22s ease-in-out;
       background: #f5f9fb;
       opacity: .8;
@@ -107,7 +109,8 @@ body.tg-night {
       right: 0;
     }
 
-    &__arrow--left, &__arrow--right {
+    &__arrow--left, 
+    &__arrow--right {
       position: absolute;
       top: 0;
       bottom: 0;

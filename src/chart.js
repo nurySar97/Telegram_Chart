@@ -1,28 +1,35 @@
 import './scss/index.scss';
-import { circle, computeBoundaries, isOver, line, toCoords, toDate } from './utils';
+import { tooltip } from './tooltip';
+import { circle, computeBoundaries, css, isOver, line, toCoords, toDate } from './utils';
 
 const WIDTH = 600;
 const HEIGHT = 200;
-const DPI_WIDTH = WIDTH * 2;
-const DPI_HEIGHT = HEIGHT * 2;
 const ROWS_COUNT = 5;
 const PADDING = 40;
+const DPI_WIDTH = WIDTH * 2;
+const DPI_HEIGHT = HEIGHT * 2;
 const VIEW_WIDTH = DPI_WIDTH;
 const VIEW_HEIGHT = DPI_HEIGHT - PADDING * 2;
 const { round } = Math;
 
-export function chart(canvas, data) {
+export function chart(root, data) {
+    let raf;
+    const canvas = root.querySelector('canvas');
     const ctx = canvas.getContext('2d');
     const [yMin, yMax] = computeBoundaries(data);
     const yRatio = VIEW_HEIGHT / (yMax - yMin);
     const xRatio = VIEW_WIDTH / (data.columns[0].length - 2);
-    let raf;
+    const tip = tooltip(root.querySelector('[data-el="tooltip"]'));
     // ==
     canvas.addEventListener('mousemove', mousemove);
     canvas.addEventListener('mouseleave', mouseleave);
     // ==
-    canvas.style.width = WIDTH + 'px';
-    canvas.style.height = HEIGHT + 'px';
+
+    css(canvas, {
+        width: WIDTH + 'px',
+        height: HEIGHT + 'px'
+    })
+
     canvas.width = DPI_WIDTH;
     canvas.height = DPI_HEIGHT;
 
@@ -35,37 +42,49 @@ export function chart(canvas, data) {
     })
 
     function mousemove({ clientX, clientY }) {
-        const { left } = canvas.getBoundingClientRect();
-        console.log(left)
+        const { left, top } = canvas.getBoundingClientRect();
         proxy.mouse = {
             x: (clientX - left) * 2,
-            y: clientY
+            tooltip: {
+                left: clientX - left + 80,
+                top: clientY - top + 10
+            }
         }
     }
 
     function mouseleave() {
         proxy.mouse = null
+        tip.hide()
     }
 
-    function xAxis(data) {
+    function xAxis(xData, yData, xRatio) {
         const colsCount = 6;
-        const step = round(data.length / colsCount);
+        const step = round(xData.length / colsCount);
         ctx.beginPath();
 
-        for (let i = 1; i < data.length; i++) {
+        for (let i = 1; i < xData.length; i++) {
 
             const x = i * xRatio;
 
             if ((i - 1) % step === 0) {
-                const text = toDate(data[i]).toString();
+                const text = toDate(xData[i]).toString();
                 ctx.fillText(text, x, DPI_HEIGHT - 10);
             }
 
-            if (isOver(proxy.mouse, x, data.length, DPI_WIDTH)) {
+            if (isOver(proxy.mouse, x, xData.length, DPI_WIDTH)) {
                 ctx.save();
                 ctx.moveTo(x, PADDING);
                 ctx.lineTo(x, DPI_HEIGHT - PADDING);
                 ctx.restore();
+
+                tip.show(proxy.mouse.tooltip, {
+                    title: toDate(xData[i]),
+                    items: yData.map(col => ({
+                        color: data.colors[col[0]],
+                        name: data.names[col[0]],
+                        value: col[i + 1]
+                    }))
+                })
             }
 
         }
@@ -105,7 +124,7 @@ export function chart(canvas, data) {
         const xData = data.columns.filter(col => data.types[col[0]] !== 'line')[0];
 
         yAxis();
-        xAxis(xData)
+        xAxis(xData, yData, xRatio)
 
         yData.map(toCoords.bind('_', xRatio, yRatio, DPI_HEIGHT, PADDING))
             .forEach((coords, index) => {

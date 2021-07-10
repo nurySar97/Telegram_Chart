@@ -10,11 +10,38 @@
 <body>
     <div class="container">
         <div class="card">
-            <canvas id="chart">
-            </canvas>
+            <div class="tg-chart" id="chart">
+                <div class="tg-chart-tooltip" data-el="tooltip"></div>
+                <canvas data-el="main"></canvas>
+                <div class="tg-chart-slider" data-el="slider">
+                    <canvas></canvas>
+                    <div class="tg-chart-slider__left" data-el="left">
+                        <div 
+                            class="tg-chart-slider__arrow--left"
+                            data-el="arrow"
+                            data-type="left"
+                        >
+                        </div>
+                    </div>
+                    <div 
+                        class="tg-chart-slider__window"
+                        data-type="window"
+                        data-el="window"
+                        style="width:300px"
+                    >
+                    </div>
+                    <div class="tg-chart-slider__right" data-el="right">
+                        <div 
+                            class="tg-chart-slider__arrow--right"
+                            data-el="arrow"
+                            data-type="right"
+                        >
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-
     <script src="app.js"></script>
 </body>
 </html>

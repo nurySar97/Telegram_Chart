@@ -64,5 +64,5 @@ export function computeBoundaries({ columns, types }) {
 }
 
 export function css(el, styles = {}) {
-    Object.assign(el.styles, styles);
+    Object.assign(el.style, styles);
 }

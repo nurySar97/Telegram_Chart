@@ -16,7 +16,7 @@ export function tooltip(el) {
     const clear = () => (el.innerHTML = '');
     return {
         show({ left, top }, data) {
-            const { height, width } = el.getClientBoundingRect();
+            const { height, width } = el.getBoundingClientRect();
             clear();
             css(el, {
                 top: top - height + 'px',
