@@ -3,6 +3,14 @@ const CIRCLE_RADIUS = 8;
 const { PI, floor } = Math;
 // const shortDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+export function computeXRatio(width, length) {
+    return width / (length - 2);
+}
+
+export function computeYRatio(height, max, min) {
+    return height / (max - min)
+}
+
 export function toDate(timestamp) {
     const date = new Date(timestamp);
     return `${shortMonths[date.getMonth()]} ${date.getDate()}`

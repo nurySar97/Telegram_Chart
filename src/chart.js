@@ -1,6 +1,7 @@
 import './scss/index.scss';
-import { tooltip } from './tooltip';
-import { circle, computeBoundaries, css, isOver, line, toCoords, toDate } from './utils';
+import { tooltip } from './components/tooltip';
+import { circle, computeBoundaries, computeXRatio, computeYRatio, css, isOver, line, toCoords, toDate } from './utils';
+import { sliderChart } from './components/sliderChart';
 
 const WIDTH = 600;
 const HEIGHT = 200;
@@ -14,12 +15,10 @@ const { round } = Math;
 
 export function chart(root, data) {
     let raf;
-    const canvas = root.querySelector('canvas');
-    const ctx = canvas.getContext('2d');
-    const [yMin, yMax] = computeBoundaries(data);
-    const yRatio = VIEW_HEIGHT / (yMax - yMin);
-    const xRatio = VIEW_WIDTH / (data.columns[0].length - 2);
+    const canvas = root.querySelector('[data-el="main"]');
     const tip = tooltip(root.querySelector('[data-el="tooltip"]'));
+    const slider = sliderChart(document.querySelector('[data-el="slider"]'), data, DPI_WIDTH);
+    const ctx = canvas.getContext('2d');
     // ==
     canvas.addEventListener('mousemove', mousemove);
     canvas.addEventListener('mouseleave', mouseleave);
@@ -39,6 +38,10 @@ export function chart(root, data) {
             raf = requestAnimationFrame(paint);
             return _result;
         }
+    });
+
+    slider.subscribe(pos => {
+        proxy.pos = pos;
     })
 
     function mousemove({ clientX, clientY }) {
@@ -92,7 +95,7 @@ export function chart(root, data) {
         ctx.closePath();
     }
 
-    function yAxis() {
+    function yAxis(yMin, yMax) {
         const step = VIEW_HEIGHT / ROWS_COUNT;
         const textStep = (yMax - yMin) / ROWS_COUNT;
 
@@ -120,10 +123,26 @@ export function chart(root, data) {
 
     function paint() {
         clear();
-        const yData = data.columns.filter(col => data.types[col[0]] === 'line');
-        const xData = data.columns.filter(col => data.types[col[0]] !== 'line')[0];
+        const length = data.columns[0].length;
+        const leftIndex = round(length * proxy.pos[0] / 100);
+        const rightIndex = round(length * proxy.pos[1] / 100);
 
-        yAxis();
+        const columns = data.columns.map(col => {
+            let _res = col.slice(leftIndex, rightIndex);
+
+            if (typeof _res[0] !== 'string') {
+                _res.unshift(col[0]);
+            }
+            return _res
+        })
+
+        const [yMin, yMax] = computeBoundaries({ columns, types: data.types });
+        const yRatio = computeYRatio(VIEW_HEIGHT, yMax, yMin);
+        const xRatio = computeXRatio(VIEW_WIDTH, columns[0].length);
+        const yData = columns.filter(col => data.types[col[0]] === 'line');
+        const xData = columns.filter(col => data.types[col[0]] !== 'line')[0];
+
+        yAxis(yMin, yMax);
         xAxis(xData, yData, xRatio)
 
         yData.map(toCoords.bind('_', xRatio, yRatio, DPI_HEIGHT, PADDING))

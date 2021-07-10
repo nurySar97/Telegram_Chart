@@ -1,4 +1,4 @@
-import { css } from "./utils";
+import { css } from "../utils";
 
 const template = (data) => `
     <div class="tooltip-title">${data.title}</div>
