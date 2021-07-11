@@ -8,7 +8,7 @@ export function computeXRatio(width, length) {
 }
 
 export function computeYRatio(height, max, min) {
-    return height / (max - min)
+    return (max - min) / height
 }
 
 export function toDate(timestamp) {
@@ -41,10 +41,10 @@ export function circle(ctx, [x, y], color) {
     ctx.closePath();
 }
 
-export function toCoords(xRatio, yRatio, DPI_HEIGHT, PADDING, col) {
+export function toCoords(xRatio, yRatio, DPI_HEIGHT, PADDING, yMin, col) {
     return col.map((y, index) => [
         floor((index - 1) * xRatio),
-        floor(DPI_HEIGHT - PADDING - y * yRatio)
+        floor(DPI_HEIGHT - PADDING - (y - yMin) / yRatio)
     ])
 }
 

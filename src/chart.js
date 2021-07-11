@@ -145,7 +145,7 @@ export function chart(root, data) {
         yAxis(yMin, yMax);
         xAxis(xData, yData, xRatio)
 
-        yData.map(toCoords.bind('_', xRatio, yRatio, DPI_HEIGHT, PADDING))
+        yData.map(toCoords.bind('_', xRatio, yRatio, DPI_HEIGHT, PADDING, yMin))
             .forEach((coords, index) => {
                 const color = data.colors[yData[index][0]];
                 line(ctx, coords, { color });
