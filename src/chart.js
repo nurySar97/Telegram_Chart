@@ -3,8 +3,8 @@ import { tooltip } from './components/tooltip';
 import { circle, computeBoundaries, computeXRatio, computeYRatio, css, isOver, line, toCoords, toDate } from './utils';
 import { sliderChart } from './components/sliderChart';
 
-const WIDTH = 600;
-const HEIGHT = 200;
+const WIDTH = 900;
+const HEIGHT = 300;
 const ROWS_COUNT = 5;
 const PADDING = 40;
 const DPI_WIDTH = WIDTH * 2;
